@@ -1,0 +1,32 @@
+# Python
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+
+# Jupyter Notebook
+.ipynb_checkpoints/
+.jupyter/
+.jupyter_history
+
+anaconda_projects
+
+.virtual_documents
+
+# Conda
+.conda/
+.env/
+.envs/
+
+# PyCharm
+.idea/
+*.iml
+*.iws
+
+# Misc
+log/
+tmp/
+*.log
+data/
+
+to_delete
