@@ -59,7 +59,7 @@ def generate_classify_and_calculate(test_image_dir, sr_model_path, classificator
 
         ground_truth_predictions.append(true_image_cls)
 
-        is_correct_ground_true_predictions.append(True if true_image_cls != true_image_cls else False)
+        is_correct_ground_true_predictions.append(true_image_cls == class_index)
 
         # with null class
         generated_image = inference.generate_image(crop_size, lr, torch.tensor([null_class_idx]), sr_model, scheduler,
@@ -68,14 +68,14 @@ def generate_classify_and_calculate(test_image_dir, sr_model_path, classificator
 
         generated_predictions.append(generated_image_cls)
 
-        is_correct_generated_predictions.append(True if generated_image_cls != true_image_cls else False)
+        is_correct_generated_predictions.append(generated_image_cls == class_index)
 
         #  collect mcnemar stats
         if true_image_cls == class_index and generated_image_cls == class_index:
             mcnemar_stats["a"] += 1
-        elif true_image_cls != class_index and not generated_image_cls != class_index:
+        elif true_image_cls == class_index and generated_image_cls != class_index:
             mcnemar_stats["b"] += 1
-        elif not true_image_cls != class_index and generated_image_cls != class_index:
+        elif true_image_cls != class_index and generated_image_cls == class_index:
             mcnemar_stats["c"] += 1
         else:
             mcnemar_stats["d"] += 1

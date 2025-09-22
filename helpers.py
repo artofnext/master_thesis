@@ -80,7 +80,7 @@ def show_images(low_res: torch.Tensor, hi_res: torch.Tensor, generated: torch.Te
 
     # 3. Create a list of the four images
     # The generated image needs to be converted to a PIL Image as well.
-    images = [low_res_pil, to_pil(hi_res.cpu()), bicubic_upscaled, to_pil(generated.cpu())]
+    images = [low_res_pil, to_pil(hi_res.cpu()), bicubic_upscaled, to_pil(normalize(generated.cpu()))]
     # images = [low_res, hi_res, normalize(bicubic_upscaled), normalize(generated)]
     titles = ['LR image', 'HR image', 'Bicubic interpolated', 'SR image (generated)']
 

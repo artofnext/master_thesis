@@ -4,7 +4,6 @@ import matplotlib.pyplot as plt
 
 from models_conditional import UNET, Scheduler
 from data_loader import DataClasses
-from helpers import normalize
 
 def generate_image(img_size, lr, class_index, model, scheduler, num_time_steps):
     # torch.cuda.empty_cache()
@@ -22,7 +21,7 @@ def generate_image(img_size, lr, class_index, model, scheduler, num_time_steps):
         temp = scheduler.beta[0] / ((torch.sqrt(1 - scheduler.alpha[0])) * (torch.sqrt(1 - scheduler.beta[0])))
         x = (1 / (torch.sqrt(1 - scheduler.beta[0]))) * z - (temp * model(z.cuda(), [0], lr, ci).cpu())
 
-    return normalize(x)
+    return x
 
 
 def get_sr_model_state(checkpoint_path, num_classes=2):
