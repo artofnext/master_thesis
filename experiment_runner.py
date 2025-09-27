@@ -7,7 +7,7 @@ import inference
 import classificator
 import torch
 
-from data_loader import SRDataset, ClassifierDataset
+from data_loader import ClassifierDataset, ExpDataset
 
 
 def generate_classify_and_calculate(test_image_dir, sr_model_path, classificator_model_path, save_path=None, batch_size=1,
@@ -64,6 +64,99 @@ def generate_classify_and_calculate(test_image_dir, sr_model_path, classificator
         # with null class
         generated_image = inference.generate_image(crop_size, lr, torch.tensor([null_class_idx]), sr_model, scheduler,
                                                    num_steps)
+        generated_image_cls = classificator.classify_image(classifier_model, generated_image)
+
+        generated_predictions.append(generated_image_cls)
+
+        is_correct_generated_predictions.append(generated_image_cls == class_index)
+
+        #  collect mcnemar stats
+        if true_image_cls == class_index and generated_image_cls == class_index:
+            mcnemar_stats["a"] += 1
+        elif true_image_cls == class_index and generated_image_cls != class_index:
+            mcnemar_stats["b"] += 1
+        elif true_image_cls != class_index and generated_image_cls == class_index:
+            mcnemar_stats["c"] += 1
+        else:
+            mcnemar_stats["d"] += 1
+
+        # if stopper >= 50:
+        #     break
+    assert (mcnemar_stats["b"] + mcnemar_stats["c"]) != 0, "Can't calculate Mcnemar stats, b + c = 0, division by 0"
+
+    mcnemar_stats["mcnemar"] = (mcnemar_stats["b"] - mcnemar_stats["c"]) ** 2 / (
+                mcnemar_stats["b"] + mcnemar_stats["c"])
+
+    base_stats_data = {
+        'image_classes': image_classes,
+        'ground_truth_predictions': ground_truth_predictions,
+        'generated_predictions': generated_predictions,
+    }
+
+    is_correct_predictions = {
+        'is_correct_ground_true_predictions': is_correct_ground_true_predictions,
+        'is_correct_generated_predictions': is_correct_generated_predictions,
+    }
+
+    data = {
+        'mcnemar_stats': mcnemar_stats,
+        'base_stats_data': base_stats_data,
+        'is_correct_predictions': is_correct_predictions
+    }
+    if save_path is None:
+        save_path = "stats/stat_data.json"
+    # Saving dictionaries to JSON files
+    with open(save_path, "w") as stat_data_file:
+        json.dump(data, stat_data_file)
+
+    return data
+
+
+def classify_and_calculate(test_image_dir, gen_image_dir, classificator_model_path, save_path=None):
+    #  Dataset loader (HR images, generated SR images and ground true classes)
+    gen_dataset = ExpDataset(image_dir=test_image_dir, gen_image_dir=gen_image_dir)
+    test_loader = DataLoader(gen_dataset, batch_size=1, shuffle=False)
+
+    num_classes = gen_dataset.num_classes
+    null_class_idx = gen_dataset.NULL_CLASS[1]
+
+    #  m1 - classification of ground true image; m2 - classification of generated image
+    #  a: m1 & m2 correct; b: m1 correct, m2 wrong; c: m1 wrong m2 correct; d: m1 wrong, m2 correct
+    mcnemar_stats = {"a": 0, "b": 0, "c": 0, "d": 0, "mcnemar": 0.0}
+
+    image_classes = []
+    ground_truth_predictions = []
+    generated_predictions = []
+
+    # this data for two sets statistical comparison
+    # lists of stats data that represents pairs of classifications of the ground true and generated images as True/False
+    # True if classification is right and False if classification is wrong with respect to the original image class in dataset
+    is_correct_ground_true_predictions = []
+    is_correct_generated_predictions = []
+
+    #  Initialize Classificator
+    classifier_model = classificator.get_model_state(classificator_model_path, num_classes=num_classes)
+
+    # stopper = 0
+    for hr, sr, cls in tqdm(test_loader, desc="Processing test dataset"):
+
+        # stopper += 1
+
+        class_index = cls[0].item()
+
+        # add image class to the list
+        image_classes.append(class_index)
+
+        #  get high resolution ground true image and classificate it
+        true_image = hr
+        true_image_cls = classificator.classify_image(classifier_model, true_image)
+
+        ground_truth_predictions.append(true_image_cls)
+
+        is_correct_ground_true_predictions.append(true_image_cls == class_index)
+
+        # get generated SR image and classificate it
+        generated_image = sr
         generated_image_cls = classificator.classify_image(classifier_model, generated_image)
 
         generated_predictions.append(generated_image_cls)

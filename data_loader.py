@@ -217,3 +217,100 @@ class ClassifierDataset(Dataset, DataClasses):
             class_index,
         )
 
+
+class GenDataset(Dataset, DataClasses):
+    def __init__(self, image_dir, crop_size=32, downscale=1):
+        self.classes = self.__class__.DATA_CLASSES
+        self.out_classes = self.__class__.CLASSES
+        self.num_classes = len(self.out_classes)
+        self.image_dir = image_dir
+        self.crop_size = crop_size
+        assert downscale >= 1
+        self.downscale = downscale
+        self.files = [os.path.join(root, f) for root, _, files in os.walk(image_dir) for f in files if
+                      os.path.isfile(os.path.join(root, f))]
+
+        # Define transformations
+        self.transform = transforms.Compose([
+            transforms.ToTensor(),
+        ])
+
+    def __len__(self):
+        # Implement logic to count the number of images
+        return len(self.files)
+
+    def __getitem__(self, idx):
+
+        # Load the image
+        path = self.files[idx]
+
+        # Get image class
+        last_dir = os.path.basename(os.path.dirname(path))
+
+        class_index = self.__class__.map_data_to_class(last_dir)
+        image_path = os.path.join(self.image_dir, path)
+        image = Image.open(image_path).convert('L')  # grayscale image
+
+        # Apply transformations
+        image = self.transform(image)
+
+        if self.downscale > 1:
+            lr_image = transforms.Resize(self.crop_size // self.downscale)(image)
+        else:
+            lr_image = image
+
+        return (
+            image,
+            lr_image,
+            class_index,
+            image_path,
+        )
+
+class ExpDataset(Dataset, DataClasses):
+    def __init__(self, image_dir, gen_image_dir):
+        self.classes = self.__class__.DATA_CLASSES
+        self.out_classes = self.__class__.CLASSES
+        self.num_classes = len(self.out_classes)
+        self.image_dir = image_dir
+        self.gen_image_dir = gen_image_dir
+        self.files = [os.path.join(root, f) for root, _, files in os.walk(image_dir) for f in files if
+                      os.path.isfile(os.path.join(root, f))]
+        self.gen_files = [os.path.join(root, f) for root, _, files in os.walk(gen_image_dir) for f in files if
+                      os.path.isfile(os.path.join(root, f))]
+        assert len(self.gen_files) == len(self.files), f'Amount of generated SR images {len(self.gen_files)} at {gen_image_dir} does not match amount of HR images {len(self.files)} at {image_dir}'
+        # Define transformations
+        self.transform = transforms.Compose([
+            transforms.ToTensor(),
+        ])
+
+    def __len__(self):
+        # Implement logic to count the number of images
+        return len(self.files)
+
+    def __getitem__(self, idx):
+
+        # Load the image
+        path = self.files[idx]
+        gen_path = self.gen_files[idx]
+
+        # Get image class
+        last_dir = os.path.basename(os.path.dirname(path))
+
+        class_index = self.__class__.map_data_to_class(last_dir)
+        image_path = os.path.join(self.image_dir, path)
+        image = Image.open(image_path).convert('L')  # grayscale image
+
+        gen_image_path = os.path.join(self.gen_image_dir, gen_path)
+        gen_image = Image.open(gen_image_path).convert('L')  # grayscale image
+
+        # Apply transformations
+        image = self.transform(image)
+        gen_image = self.transform(gen_image)
+
+
+        return (
+            image,
+            gen_image,
+            class_index,
+        )
+

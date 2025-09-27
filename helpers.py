@@ -13,7 +13,7 @@ from sklearn.metrics import confusion_matrix
 import seaborn as sns
 
 # Dataset data loader
-from data_loader import SRDataset
+from data_loader import GenDataset
 from torch.utils.data import DataLoader
 
 def set_seed(seed: int = 42):  # you know why 42 :)
@@ -41,7 +41,7 @@ def normalize(x):
 
 def image_loader(image_dir, num_images, crop_size, scale_factor):
     # Load and log the first 10 elements from the DataLoader
-    test_dataset = SRDataset(image_dir=image_dir, crop_size=crop_size, scale_factor=scale_factor, patch=1, cfg_factor=0)
+    test_dataset = GenDataset(image_dir=image_dir, crop_size=crop_size, downscale=scale_factor)
     test_loader = DataLoader(test_dataset, shuffle=True)
     # list of low-res image tensors
     lrs = []
@@ -49,14 +49,17 @@ def image_loader(image_dir, num_images, crop_size, scale_factor):
     hrs = []
     # list of true image classes
     clss =[]
+    # list of image paths
+    path = []
     # print(f"First {num_images} elements from DataLoader:")
-    for idx, (hr, lr, ci) in enumerate(test_loader):
+    for idx, (hr, lr, ci, pt) in enumerate(test_loader):
         if idx >= num_images:
             break
         hrs.append(hr.squeeze(0))
         lrs.append(lr.squeeze(0))
         clss.append(ci)
-    return lrs, hrs, clss
+        path.append(pt)
+    return lrs, hrs, clss, path
 
 def show_images(low_res: torch.Tensor, hi_res: torch.Tensor, generated: torch.Tensor):
     """
