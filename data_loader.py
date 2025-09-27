@@ -4,6 +4,7 @@ import random
 from PIL import Image
 from torch.utils.data import Dataset
 from torchvision import transforms
+import logging
 
 class DataClasses:
     CLASSES = {
@@ -120,6 +121,8 @@ class SRDataset(Dataset, DataClasses):
 
         self.files = [os.path.join(root, f) for root, _, files in os.walk(image_dir) for f in files if
                       os.path.isfile(os.path.join(root, f))]
+        if len(self.files) == 0:
+            logging.error(f'SRDataset found no files to process')
 
         # Define transformations
         self.transform = transforms.Compose([

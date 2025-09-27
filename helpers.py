@@ -41,7 +41,7 @@ def normalize(x):
 
 def image_loader(image_dir, num_images, crop_size, scale_factor):
     # Load and log the first 10 elements from the DataLoader
-    test_dataset = SRDataset(image_dir=image_dir, crop_size=crop_size, scale_factor=scale_factor, cfg_factor=0)
+    test_dataset = SRDataset(image_dir=image_dir, crop_size=crop_size, scale_factor=scale_factor, patch=1, cfg_factor=0)
     test_loader = DataLoader(test_dataset, shuffle=True)
     # list of low-res image tensors
     lrs = []

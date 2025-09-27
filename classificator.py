@@ -41,6 +41,7 @@ def trainer(
         learning_rate=0.001,
         device='cpu',
         file_to_save=None,
+        load_from=None,
 ):
 
     """
@@ -60,6 +61,7 @@ def trainer(
         learning_rate (float, optional): The learning rate for the optimizer. Defaults to 0.001.
         device (str, optional): The device to run the training on ('cpu' or 'cuda'). Defaults to 'cpu'.
         file_to_save (str, optional): Path to the file to save the trained model to. If None defaults to f'classificator_checkpoints/classificator_checkpoint_{time.time()}.pth'
+        load_from (str, optional): Path to the file to load the trained model from. Defaults to None.
     """
 
     train_dataset = ClassifierDataset(image_dir=train_image_dir, crop_size=crop_size)
@@ -71,6 +73,22 @@ def trainer(
     model = ImageClassificationModel(num_classes=train_dataset.num_classes).to(device)
     criterion = nn.CrossEntropyLoss()
     optimizer = optim.Adam(model.parameters(), lr=learning_rate)
+
+    # load previously saved weights to continue training
+    if load_from and os.path.exists(load_from):
+        print(f"Loading model weights from {load_from}...")
+        checkpoint = torch.load(load_from, map_location=device)
+        model.load_state_dict(checkpoint['weights'])
+        # load epoch
+        if 'train_losses' in checkpoint:
+            epoch = len(checkpoint['train_losses'])
+        # load optimizer state
+        if 'optimizer_state_dict' in checkpoint:
+            optimizer.load_state_dict(checkpoint['optimizer_state_dict'])
+        print("Model weights loaded successfully.")
+    else:
+        print("No pre-trained model found or path not specified. Starting training from scratch.")
+
 
     # Lists to store metrics for plotting
     train_losses = []
@@ -111,7 +129,8 @@ def trainer(
         'train_accuracies': train_accuracies,
         'val_losses': val_losses,
         'val_accuracies': val_accuracies,
-        'weights': model.state_dict()
+        'weights': model.state_dict(),
+        'optimizer_state': optimizer.state_dict()
     }
     file_to_save = file_to_save if file_to_save is not None else f'classificator_checkpoints/classificator_checkpoint_{time.time()}.pth'
     torch.save(checkpoint, file_to_save)
