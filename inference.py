@@ -142,7 +142,7 @@ def generate_image(img_size, lr, class_index, model, scheduler, num_time_steps):
 
 
 def get_sr_model_state(checkpoint_path, num_classes=2):
-    checkpoint = torch.load(checkpoint_path)
+    checkpoint = torch.load(checkpoint_path, weights_only=False)
     model = UNET(num_classes=num_classes).cuda()
     model.load_state_dict(checkpoint['weights'])
     return model

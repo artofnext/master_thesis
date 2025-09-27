@@ -77,7 +77,7 @@ def trainer(
     # load previously saved weights to continue training
     if load_from and os.path.exists(load_from):
         print(f"Loading model weights from {load_from}...")
-        checkpoint = torch.load(load_from, map_location=device)
+        checkpoint = torch.load(load_from, map_location=device, weights_only=False)
         model.load_state_dict(checkpoint['weights'])
         # load epoch
         if 'train_losses' in checkpoint:
@@ -281,7 +281,7 @@ def get_model_state(model_path, num_classes=2, device='cpu'):
     """
     # Load the checkpoint dictionary from the specified path.
     # The `map_location` argument ensures the model is loaded onto the correct device.
-    checkpoint = torch.load(model_path, map_location=device)
+    checkpoint = torch.load(model_path, map_location=device, weights_only=False)
 
     # Initialize a new instance of the model.
     # The architecture must match the one used to create the checkpoint.
@@ -357,7 +357,7 @@ def classify_dataset(model_path, dataset, batch_size, num_classes, device='cpu')
     model = ImageClassificationModel(num_classes=num_classes).to(device)
 
     # Step 2: Load the pre-trained model weights
-    model.load_state_dict(torch.load(model_path, map_location=device))
+    model.load_state_dict(torch.load(model_path, map_location=device, weights_only=False))
     model.eval()
 
     # Step 3: Create the data loader
@@ -393,7 +393,7 @@ def classify_dataset_with_metrics(model_path, dataset, batch_size, num_classes, 
     model = ImageClassificationModel(num_classes=num_classes).to(device)
 
     # Step 2: Load the pre-trained model weights
-    model.load_state_dict(torch.load(model_path, map_location=device))
+    model.load_state_dict(torch.load(model_path, map_location=device, weights_only=False))
     model.eval()
 
     # Step 3: Create the data loader

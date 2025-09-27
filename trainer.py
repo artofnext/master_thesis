@@ -66,9 +66,9 @@ def train_sr(
     start_epoch = 1
     # Check for a checkpoint path to resume training.
     if checkpoint_path is not None:
-        checkpoint = torch.load(checkpoint_path)
+        checkpoint = torch.load(checkpoint_path, weights_only=False)
         model.load_state_dict(checkpoint['weights'])
-        train_loss = torch.load(checkpoint_path)['train_loss']
+        train_loss = torch.load(checkpoint_path, weights_only=False)['train_loss']
         optimizer.load_state_dict(checkpoint['optimizer'])
         start_epoch = len(train_loss)
     # Initialize the  Mean Squared Error (MSE) loss function.
