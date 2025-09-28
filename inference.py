@@ -115,9 +115,9 @@ def generate(source_image_path, path_to_save, model_file):
         pil_image.save(save_image_path)
 
         counter += 1
-        if idx % 100 == 0:
-            print(f'Generated image \t{idx}')
-            print(f'Generated images: \t{(100 * idx / num_images_to_generate):.2f} %')
+        # if idx % 100 == 0:
+        #     print(f'Generated image \t{idx}')
+        #     print(f'Generated images: \t{(100 * idx / num_images_to_generate):.2f} %')
         cuda.empty_cache()
     print(f'Finished generating images. Generated {counter} images, {(100 * counter / num_images_to_generate):.2f}')
 
